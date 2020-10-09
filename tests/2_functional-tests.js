@@ -33,11 +33,34 @@ suite('Functional Tests', function () {
         });
 
         test('1 stock with like', function (done) {
+            chai.request(server)
+                .get('/api/stock-prices')
+                .query({ stock: 'f', like: true })
+                .end(function (err, res) {
+                    assert.equal(res.status, 200);
+                    assert.equal(res.body.stockData.stock, "F");
+                    assert.isAbove(res.body.stockData.likes, 0);
 
+                    done();
+                });
         });
 
         test('1 stock with like again (ensure likes arent double counted)', function (done) {
+            chai.request(server)
+                .get('/api/stock-prices')
+                .query({ stock: 'ges', like: true })
+                .end(function (err, res) {
+                    const currentLikes = res.body.stockData.likes;
 
+                    chai.request(server)
+                        .get('/api/stock-prices')
+                        .query({ stock: 'ges', like: true })
+                        .end(function (err, res) {
+                            assert.equal(res.body.stockData.likes, currentLikes);
+
+                            done();
+                        });
+                });
         });
 
         test('2 stocks', function (done) {

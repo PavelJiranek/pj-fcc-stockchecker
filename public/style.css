@@ -49,3 +49,7 @@ button:hover, input[type="checkbox"]:checked {
 input[type="checkbox"] {
     margin-left: 0.5rem;
 }
+
+form {
+    margin: 1rem 0;
+}

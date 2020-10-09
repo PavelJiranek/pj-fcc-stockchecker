@@ -20,7 +20,10 @@ const getSingleStockData = (stockData) => {
         : { stock, price: stringifyNumToFixed2(latestPrice) };
 }
 
-const addLikesToStock = (stock, likes = 0) => isString(stock) ? stock : assoc('likes', likes, stock);
+const addLikesToStock = (stock, likes = 0) =>
+    isString(stock)
+        ? stock
+        : assoc('likes', likes, stock);
 
 const getFirstStockRelLikes = converge(subtract, [head, last]);
 const getSecondStockRelLikes = converge(subtract, [last, head]);
@@ -46,11 +49,50 @@ const getSingleStockResponse = async (stock, likes) => {
     const rawStockData = await fetchStockData(stock);
     const stockData = getSingleStockData(rawStockData);
 
-    return { stockData: addLikesToStock(stockData) };
+    return { stockData: addLikesToStock(stockData, likes) };
+}
+const STOCKS_COLLECTION = "stockChecker.stocks";
+
+const getStockData = (db, stockTicker) => db.collection(STOCKS_COLLECTION)
+    .findOne({ _id: stockTicker })
+    .then(data => data);
+
+const getStockProp = async (db, stockTicker, prop) => {
+    const stockData = await getStockData(db, stockTicker);
+    return stockData ? stockData[prop] : undefined;
+}
+
+const getStockLikes = async (db, stockTicker) => {
+    return await getStockProp(db, stockTicker, 'likes');
+}
+
+const getStockIps = async (db, stockTicker) => {
+    return await getStockProp(db, stockTicker, 'ipAddresses');
+}
+
+const isNewIpToLike = (ip = '', ipsCollection = []) => !ipsCollection.includes(ip);
+
+const incStockLikes = (db, stockTicker, ipAddress) => db.collection(STOCKS_COLLECTION)
+    .updateOne({ _id: stockTicker },
+        { $inc: { likes: 1 }, $push: { ipAddresses: ipAddress } },
+        { upsert: true },
+    )
+    .then(async () => {
+        return await getStockLikes(db, stockTicker);
+    });
+
+const updateStockLikes = async (db, stockTicker, ipAddress) => {
+    const ips = await getStockIps(db, stockTicker, ipAddress);
+    if (isNewIpToLike(ipAddress, ips)) {
+        return await incStockLikes(db, stockTicker, ipAddress);
+    }
+    return await getStockLikes(db, stockTicker);
 }
 
 module.exports = {
-    fetchStockData,
+    normalizeStockTicker,
     getSingleStockResponse,
     getMultipleStockResponse,
+    getStockLikes,
+    updateStockLikes,
 }
