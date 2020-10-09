@@ -18,6 +18,7 @@ const {
     getSingleStockResponse,
     getStockLikes,
     updateStockLikes,
+    STOCKS_COLLECTION,
 } = require('./stockHandler');
 
 const CONNECTION_STRING = process.env.MONGO_URI; //MongoClient.connect(CONNECTION_STRING, function(err, db) {});
@@ -47,7 +48,17 @@ module.exports = function (app) {
             }
 
             if (isArray(stock)) {
-                stockResponse = await getMultipleStockResponse(stock);
+                const stocks = stock.map(normalizeStockTicker);
+                const [stock1, stock2] = stocks;
+                likes = []
+                if (like) {
+                    likes[0] = await updateStockLikes(db, stock1, ipAddress);
+                    likes[1] = await updateStockLikes(db, stock2, ipAddress);
+                } else {
+                    likes[0] = await getStockLikes(db, stock1);
+                    likes[1] = await getStockLikes(db, stock2);
+                }
+                stockResponse = await getMultipleStockResponse(stock, likes);
             } else {
                 const stockTicker = normalizeStockTicker(stock);
                 if (like) {
@@ -61,4 +72,20 @@ module.exports = function (app) {
             res.send(stockResponse);
         });
 
+    app.route('/api/clear-likes')
+        .delete((_, res) => {
+            db && db.collection(STOCKS_COLLECTION)
+                .deleteMany({}).then(r => {
+                        if (r.deletedCount > 0) {
+                            res.send('complete delete successful')
+                        } else {
+                            res.send('no likes deleted')
+                        }
+                    },
+                    () => {
+                        res.status(400);
+                        res.send('Failed to delete likes')
+                    },
+                )
+        });
 };

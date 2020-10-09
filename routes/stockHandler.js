@@ -1,5 +1,5 @@
 const fetch = require("node-fetch");
-const { pipe, isNil, toUpper, trim, assoc, converge, subtract, head, last } = require('ramda');
+const { pipe, isNil, toUpper, trim, assoc, converge, subtract, head, last, map, defaultTo } = require('ramda');
 const { isString } = require('ramda-adjunct');
 
 const normalizeStockTicker = pipe(trim, toUpper);
@@ -28,10 +28,14 @@ const addLikesToStock = (stock, likes = 0) =>
 const getFirstStockRelLikes = converge(subtract, [head, last]);
 const getSecondStockRelLikes = converge(subtract, [last, head]);
 
-const getRelStockLikes = (stockIdx, likes = [2, 1]) =>
-    stockIdx === 0
-        ? getFirstStockRelLikes(likes)
-        : getSecondStockRelLikes(likes);
+const getRelStockLikes = (stockIdx, likes) => {
+    const normalizedLikes = map(defaultTo(0), likes)
+
+    return stockIdx === 0
+        ? getFirstStockRelLikes(normalizedLikes)
+        : getSecondStockRelLikes(normalizedLikes);
+
+}
 
 const getMultipleStockResponse = async (stocks, likes) => {
     const rawStockData = await Promise.all(stocks.map(async (stock) => await fetchStockData(stock)));
@@ -95,4 +99,5 @@ module.exports = {
     getMultipleStockResponse,
     getStockLikes,
     updateStockLikes,
+    STOCKS_COLLECTION,
 }
