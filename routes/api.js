@@ -19,7 +19,8 @@ const {
     getStockLikes,
     updateStockLikes,
     STOCKS_COLLECTION,
-} = require('./stockHandler');
+    getIpFromReq
+} = require('../controllers/stockHandler');
 
 const CONNECTION_STRING = process.env.MONGO_URI; //MongoClient.connect(CONNECTION_STRING, function(err, db) {});
 
@@ -40,7 +41,7 @@ module.exports = function (app) {
         .get(async function (req, res) {
             let stockResponse, likes;
             const { stock, like } = req.query;
-            const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+            const ipAddress = getIpFromReq(req);
 
             if (!db) {
                 res.send("Please wait, connecting to the database...")

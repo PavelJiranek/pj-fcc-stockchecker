@@ -1,6 +1,17 @@
 const fetch = require("node-fetch");
-const { pipe, isNil, toUpper, trim, assoc, converge, subtract, head, last, map, defaultTo } = require('ramda');
+const { pipe, isNil, toUpper, trim, assoc, converge, subtract, head, last, map, defaultTo, match } = require('ramda');
 const { isString } = require('ramda-adjunct');
+
+const ipMatcher = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
+const getIpFromHeader = header => pipe(match(ipMatcher), head)(header);
+
+const getIpFromReq = req => {
+    const xForwardedHeader = req.headers['x-forwarded-for'];
+
+    return xForwardedHeader
+        ? getIpFromHeader(xForwardedHeader)
+        : req.connection.remoteAddress;
+}
 
 const normalizeStockTicker = pipe(trim, toUpper);
 
@@ -100,4 +111,5 @@ module.exports = {
     getStockLikes,
     updateStockLikes,
     STOCKS_COLLECTION,
+    getIpFromReq,
 }
