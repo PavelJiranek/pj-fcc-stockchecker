@@ -6,36 +6,39 @@
 *       (if additional are added, keep them at the very end!)
 */
 
-var chaiHttp = require('chai-http');
-var chai = require('chai');
-var assert = chai.assert;
-var server = require('../server');
+const chaiHttp = require('chai-http');
+const chai = require('chai');
+const assert = chai.assert;
+const server = require('../server');
 
 chai.use(chaiHttp);
 
-suite('Functional Tests', function() {
-    
-    suite('GET /api/stock-prices => stockData object', function() {
-      
-      test('1 stock', function(done) {
-       chai.request(server)
-        .get('/api/stock-prices')
-        .query({stock: 'goog'})
-        .end(function(err, res){
-          
-          //complete this one too
-          
-          done();
+suite('Functional Tests', function () {
+
+    suite('GET /api/stock-prices => stockData object', function () {
+
+        test('1 stock', function (done) {
+            chai.request(server)
+                .get('/api/stock-prices')
+                .query({ stock: 'goog' })
+                .end(function (err, res) {
+                    assert.equal(res.status, 200);
+                    assert.equal(res.body.stockData.stock, "GOOG");
+                    assert.isNumber(res.body.stockData.likes)
+                    assert.isString(res.body.stockData.price)
+                    assert.match(res.body.stockData.price, /\d{2}\.\d{2}$/)
+
+                    done();
+                });
         });
-      });
-      
-      test('1 stock with like', function(done) {
-        
-      });
-      
-      test('1 stock with like again (ensure likes arent double counted)', function(done) {
-        
-      });
+
+        test('1 stock with like', function (done) {
+
+        });
+
+        test('1 stock with like again (ensure likes arent double counted)', function (done) {
+
+        });
       
       test('2 stocks', function(done) {
         
